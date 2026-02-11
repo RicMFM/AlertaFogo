@@ -1,1 +1,2 @@
+<h1> Alerta Fogo </h1>
 <b>Aplicação que notifica utilizadores que se encontrem perto de um incendio</b>
