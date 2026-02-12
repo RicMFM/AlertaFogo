@@ -1,60 +1,71 @@
-package pt.ipt.alertafogo.fragementos
+package pt.ipt.alertafogo.fragmentos
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
+import android.preference.PreferenceManager
+import android.util.Log
 import android.view.View
-import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.overlay.Marker
 import pt.ipt.alertafogo.R
+import pt.ipt.alertafogo.databinding.FragmentMapaBinding
+import pt.ipt.alertafogo.repositorio.FogosRepositorio
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+class Mapa : Fragment(R.layout.fragment_mapa) {
 
-/**
- * A simple [Fragment] subclass.
- * Use the [Mapa.newInstance] factory method to
- * create an instance of this fragment.
- */
-class Mapa : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+    private var _binding: FragmentMapaBinding? = null
+    private val binding get() = _binding!!
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
+    private val fogosRepository = FogosRepositorio()
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentMapaBinding.bind(view)
+
+        // 1. Configurar OSMDroid
+        Configuration.getInstance().load(
+            requireContext(),
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+        )
+
+        // 2. Configurar o mapa
+        configurarMapa()
+
+    }
+
+    private fun configurarMapa() {
+        binding.osmmap.apply {
+            // Tipo de mapa
+            setTileSource(TileSourceFactory.MAPNIK)
+
+            // Permitir zoom e movimento
+            setMultiTouchControls(true)
+
+            // Posição inicial: Centro de Portugal
+            controller.setZoom(7.0)
+            controller.setCenter(GeoPoint(39.5, -8.0))
         }
+
+        Log.d("Mapa", "Mapa configurado")
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_mapa, container, false)
+
+    override fun onResume() {
+        super.onResume()
+        binding.osmmap.onResume()
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment Mapa.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            Mapa().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+    override fun onPause() {
+        super.onPause()
+        binding.osmmap.onPause()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
